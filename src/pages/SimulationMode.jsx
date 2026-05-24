@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import QuestionCard from '../components/QuestionCard'
 import Timer from '../components/Timer'
@@ -12,7 +12,7 @@ export default function SimulationMode() {
   const { addEntry } = useHistory()
   const { recordPractice } = useStreak()
 
-  const SIM_TIME = 50 * 60 // 50 minutes
+  const SIM_TIME = 50 * 60
   const SIM_COUNT = 45
 
   const [questions, setQuestions] = useState(() => {
@@ -27,7 +27,11 @@ export default function SimulationMode() {
   const [showReview, setShowReview] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
-  const handleTimeUp = () => { if (!submitted) submitExam() }
+  const submitExamRef = useRef(null)
+
+  const handleTimeUp = useCallback(() => {
+    submitExamRef.current?.()
+  }, [])
 
   const { timeLeft, isWarning, isDanger, start, formatTime } = useTimer(SIM_TIME, false, handleTimeUp)
 
@@ -56,7 +60,8 @@ export default function SimulationMode() {
     })
   }
 
-  const submitExam = () => {
+  const submitExam = useCallback(() => {
+    if (submitted) return
     setSubmitted(true)
     setFinished(true)
     const correctCount = questions.filter(q => {
@@ -65,7 +70,6 @@ export default function SimulationMode() {
       return ca.length === ua.length && ca.every((v, i) => v === ua[i])
     }).length
     const pct = Math.round((correctCount / questions.length) * 100)
-    const scaled = Math.round(300 + (pct / 100) * 700)
     const correctIds = questions.filter(q => {
       const ua = (userAnswers[q.id] || []).slice().sort()
       const ca = q.correctAnswers.slice().sort()
@@ -85,7 +89,11 @@ export default function SimulationMode() {
       domains: [...new Set(questions.map(q => q.domain))]
     })
     recordPractice()
-  }
+  }, [submitted, questions, userAnswers, addEntry, SIM_TIME, timeLeft, recordPractice])
+
+  useEffect(() => {
+    submitExamRef.current = submitExam
+  }, [submitExam])
 
   const restart = () => {
     const shuffled = [...allQuestions].sort(() => Math.random() - 0.5)
@@ -233,7 +241,6 @@ export default function SimulationMode() {
   }
 
   const q = questions[currentIndex]
-  const isAnswered = (userAnswers[q.id]?.length || 0) > 0
 
   return (
     <div className="sim-sidebar">

@@ -1,9 +1,9 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import QuestionCard from '../components/QuestionCard'
 import TopicFilter from '../components/TopicFilter'
 import Timer from '../components/Timer'
-import ScoreBoard, { calculateScore } from '../components/ScoreBoard'
+import ScoreBoard from '../components/ScoreBoard'
+import { calculateScore } from '../components/calculateScore'
 import useTimer from '../hooks/useTimer'
 import useKeyboard from '../hooks/useKeyboard'
 import useHistory from '../hooks/useHistory'
@@ -11,26 +11,27 @@ import useStreak from '../hooks/useStreak'
 import { allQuestions, domains } from '../data'
 
 export default function ExamMode() {
-  const navigate = useNavigate()
   const { addEntry } = useHistory()
   const { recordPractice } = useStreak()
 
-  // Config state
   const [configured, setConfigured] = useState(false)
   const [questionCount, setQuestionCount] = useState(30)
   const [timeMinutes, setTimeMinutes] = useState(30)
   const [selectedDomains, setSelectedDomains] = useState(domains.map(d => d.id))
 
-  // Exam state
   const [questions, setQuestions] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [userAnswers, setUserAnswers] = useState({})
   const [showScore, setShowScore] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
-  const { timeLeft, isRunning, isWarning, isDanger, start, pause, formatTime } = useTimer(timeMinutes * 60, false, () => {
-    if (!submitted) finishExam()
-  })
+  const finishExamRef = useRef(null)
+
+  const handleTimeUp = useCallback(() => {
+    finishExamRef.current?.()
+  }, [])
+
+  const { timeLeft, isWarning, isDanger, start, pause } = useTimer(timeMinutes * 60, false, handleTimeUp)
 
   const startExam = () => {
     const filtered = allQuestions.filter(q => selectedDomains.includes(q.domain))
@@ -59,7 +60,8 @@ export default function ExamMode() {
     })
   }, [questions, currentIndex, submitted])
 
-  const finishExam = () => {
+  const finishExam = useCallback(() => {
+    if (submitted) return
     setSubmitted(true)
     setShowScore(true)
     pause()
@@ -76,7 +78,11 @@ export default function ExamMode() {
       domains: selectedDomains
     })
     recordPractice()
-  }
+  }, [submitted, pause, questions, userAnswers, addEntry, timeMinutes, timeLeft, selectedDomains, recordPractice])
+
+  useEffect(() => {
+    finishExamRef.current = finishExam
+  }, [finishExam])
 
   useKeyboard({
     a: () => handleSelect('A'),

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import useHistory from '../hooks/useHistory'
 
 export default function History() {

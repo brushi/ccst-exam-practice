@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 
 export default function useKeyboard(handlers) {
   const handlersRef = useRef(handlers);
-  handlersRef.current = handlers;
+
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -12,7 +15,7 @@ export default function useKeyboard(handlers) {
       }
 
       const handler = handlersRef.current[e.key];
-      if (handler) {
+      if (handler && typeof handler === 'function') {
         handler(e);
       }
     }

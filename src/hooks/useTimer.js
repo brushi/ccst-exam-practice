@@ -13,7 +13,9 @@ export default function useTimer(initialSeconds, autoStart = false, onTimeUp) {
   const intervalRef = useRef(null);
   const onTimeUpRef = useRef(onTimeUp);
 
-  onTimeUpRef.current = onTimeUp;
+  useEffect(() => {
+    onTimeUpRef.current = onTimeUp;
+  });
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current !== null) {

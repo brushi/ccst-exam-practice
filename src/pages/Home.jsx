@@ -4,7 +4,7 @@ import useStreak from '../hooks/useStreak'
 
 export default function Home() {
   const { getStats } = useHistory()
-  const { streak, hasPracticedToday, lastPracticeDate } = useStreak()
+  const { streak } = useStreak()
   const stats = getStats()
 
   return (

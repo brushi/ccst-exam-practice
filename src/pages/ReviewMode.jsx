@@ -12,9 +12,8 @@ export default function ReviewMode() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState([])
   const [showResult, setShowResult] = useState(false)
-  const [sessions, setSessions] = useState(0)
 
-  const failedIds = useMemo(() => getFailedQuestions(), [sessions])
+  const failedIds = useMemo(() => getFailedQuestions(), [getFailedQuestions])
   const questions = useMemo(() => allQuestions.filter(q => failedIds.includes(q.id)), [failedIds])
   const currentQuestion = questions[currentIndex]
 
@@ -40,7 +39,6 @@ export default function ReviewMode() {
       setSelectedAnswers([])
       setShowResult(false)
     } else {
-      setSessions(s => s + 1)
       setCurrentIndex(0)
       setSelectedAnswers([])
       setShowResult(false)
